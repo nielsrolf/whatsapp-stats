@@ -2,6 +2,9 @@ import datetime as dt
 import pdb
 from collections import OrderedDict
 from matplotlib import pyplot as plt
+import numpy as np
+import os
+from sklearn.svm import SVR
 
 """
 Plots:
@@ -13,14 +16,18 @@ Plots:
     - how many words per message
     - average length of convos
     - average response time
+Todo:
+    - most frequent words
 """
 
 CONV_PATH = 'cemre.txt'
-SEQUENCES = ["nice", ":)", "<Medien ausgeschlossen>"]
+SEQUENCES = ["nice", ":)", ":(", "fuck", "sorry"]
 
 
 CONV_START_THRESHOLD = 20 # minutes
 
+try: os.mkdir("plots")
+except: pass
 
 class Message():
     def __init__(self, line, pre):
@@ -58,7 +65,9 @@ class Message():
         return author, line
 
     def add(self, line):
-        pass
+        words = line.lower().split()
+        self.text += ' '.join(words)
+        self.words_count += len(words)
 
 
 with open(CONV_PATH, 'r') as file:
@@ -70,7 +79,6 @@ for line in lines:
     if not msg.skip:
         messages.append(msg)
 messages = messages[1:]
-
 
 """
 Now comes the part to analyze the messages. Here is how it goes
@@ -195,17 +203,49 @@ def _per_hour(msg):
 # -----
 # plotting
 # -----
+def actual_categorical_plot(group, stat, keys, values):
+    name = stat + " " + group
+    plt.clf()
+    plt.bar(range(len(keys)), values)
+    plt.xticks(range(len(keys)), keys)
+    plt.title(name)
+    plt.savefig("plots/" + name+".png")
+    plt.clf()
+
 def categorical_plot(group, stat, keys, values):
-    print(" ---- Results ----- \n", stat, group)
+    name = stat + " " + group
+    print(" ---- Results ----- \n", name)
     for key, value in zip(keys, values):
         print("   ", key, ":", value)
+    if len(keys) > 1:
+        actual_categorical_plot(group, stat, keys, values)
 
-def timeline_plot(group, stat, keys, values):
-    name = stat + "-" + group
-    plt.clf()
-    plt.plot(keys, values)
-    plt.title(name)
-    plt.savefig(name+".png")
+def per_hour_plot(group, stat, keys, values):
+    perm = np.argsort(keys)
+    actual_categorical_plot(group, stat, np.array(keys)[perm], np.array(values)[perm])
+
+
+def smoothed(keys, values):
+    svr = SVR(gamma=2)
+    svr.fit(np.array(keys)[...,None], np.array(values)[...,None])
+    return svr.predict(np.array(keys)[...,None])
+
+def timeline_plot(group, stat, keys, values, fig=None):
+    """
+    If fig is None, plot in a new figure
+    If fig is not None, use the group as label and plot in that figure
+    """
+    
+    if fig is None:
+        plt.clf()
+        name = stat + " " + group
+        plt.plot(keys, values)
+        plt.title(name)
+        plt.savefig("plots/" + name+".png")
+        plt.clf()
+    else:
+        plt.plot(keys, values, label=group)
+
 
 
 # -----
@@ -214,19 +254,51 @@ def timeline_plot(group, stat, keys, values):
 per_total   = Aggregate(_per_total, categorical_plot, "total")
 per_day     = Aggregate(_per_day, timeline_plot, "per day")
 per_author  = Aggregate(_per_author, categorical_plot, "per author")
-per_hour    = Aggregate(_per_hour, categorical_plot, "per hour")
+per_hour    = Aggregate(_per_hour, per_hour_plot, "per hour")
 ta_groups   = [per_total, per_day, per_author, per_hour]
 
-"""
-for stat in ta_stats:
-    analyzer = ApplyStat(messages, stat, sum)
-    for grouping in ta_groups:
-        keys, values = analyzer.run(grouping)
-        grouping.plot(keys, values)
-"""
 for stat in ta_stats:
     analyzer = ApplyStat(messages, stat)
-    for grouping in [per_total, per_author, per_day]:
+    for grouping in ta_groups:
         keys, values = analyzer.run(grouping)
         grouping.plot(stat.name, keys, values)
 
+"""
+Would be nice to combine group by's, to plot how many messages were sent each day
+"""
+
+class ComboGroup(Aggregate):
+    def __init__(self,  time_group, cat_group):
+        """
+        main group decides the plot, should be the timeline
+        Note that the arguments are different to Aggregate
+        """
+        self.time_group, self.cat_group = time_group, cat_group
+        self.name = self.cat_group.name + " " + self.time_group.name
+
+    def __call__(self, msg):
+        return (self.cat_group(msg), self.time_group(msg))
+
+    def plot(self, stat_name, keys, values):
+        plt.clf()
+        fig = plt.figure()
+
+        cats = list(dict(keys).keys()) # keys are cat, time pairs
+        for cat in cats:
+            filtered_values = [value for key, value in zip(keys, values) if key[0]==cat]
+            time_labels = [key[1] for key in keys if key[0]==cat]
+            self.time_group._plot(cat, stat_name, time_labels, filtered_values, fig)
+
+        plt.legend()
+        plt.title(stat_name + " " + self.name)
+        plt.savefig("plots/" + self.name+" "+stat_name+".png")
+        plt.close('all')
+
+time_author = ComboGroup(per_day, per_author)
+
+per_author_per_day = ComboGroup(per_day, per_author)
+
+for stat in ta_stats:
+    analyzer = ApplyStat(messages, stat)
+    keys, values = analyzer.run(per_author_per_day)
+    per_author_per_day.plot(stat.name, keys, values)

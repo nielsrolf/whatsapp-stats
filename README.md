@@ -10,41 +10,63 @@ Makes some statistics of a whatsapp conversation
 ## Example Output
 
 ```
- ---- Results ----- 
+  ---- Results ----- 
  #messages total
     0 : 14524
  ---- Results ----- 
  #messages per author
-    othername : 7993
-    yourname : 6531
+    friend : 7993
+    you : 6531
  ---- Results ----- 
  #words total
-    0 : 73367
+    0 : 76366
  ---- Results ----- 
  #words per author
-    othername : 35236
-    yourname : 38131
+    friend : 36639
+    you : 39727
  ---- Results ----- 
  #first texting total
     0 : 909
  ---- Results ----- 
  #first texting per author
-    othername : 491
-    yourname : 418
+    friend : 491
+    you : 418
  ---- Results ----- 
  Use of nice total
     0 : 203
  ---- Results ----- 
  Use of nice per author
-    othername : 97
-    yourname : 106
+    friend : 97
+    you : 106
  ---- Results ----- 
  Use of :) total
-    0 : 722
+    0 : 727
  ---- Results ----- 
  Use of :) per author
-    othername : 225
-    yourname : 497
+    friend : 227
+    you : 500
+ ---- Results ----- 
+ Use of :( total
+    0 : 136
+ ---- Results ----- 
+ Use of :( per author
+    friend : 98
+    you : 38
+ ---- Results ----- 
+ Use of fuck total
+    0 : 28
+ ---- Results ----- 
+ Use of fuck per author
+    friend : 10
+    you : 18
+ ---- Results ----- 
+ Use of sorry total
+    0 : 56
+ ---- Results ----- 
+ Use of sorry per author
+    friend : 35
+    you : 21
+
 ```
 
 And some plots
