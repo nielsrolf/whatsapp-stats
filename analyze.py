@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 from sklearn.svm import SVR
+import argparse
 
 """
 Plots:
@@ -20,13 +21,27 @@ Todo:
     - most frequent words
 """
 
-CONV_PATH = 'cemre.txt'
-SEQUENCES = ["nice", ":)", ":(", "fuck", "sorry"]
+SEQUENCES = ["inder", "baus", "klaus", "aus", "bau "]
 
+parser = argparse.ArgumentParser(description="choose a file in ./chats to analyze")
+parser.add_argument("file")
+parser.add_argument("sequences", nargs="+", help="words to analyze")
+args = parser.parse_args()
+filename = args.file
+if not filename[-4:] == ".txt":
+    filename += ".txt"
+CONV_PATH = "chats/" + filename
+PLOT_PATH = "chats/{}-stats".format(filename[:-4])
+
+SEQUENCES = args.sequences
+
+"""
+First we load the messages to objects with all relevant information
+"""
 
 CONV_START_THRESHOLD = 20 # minutes
 
-try: os.mkdir("plots")
+try: os.mkdir(PLOT_PATH)
 except: pass
 
 class Message():
@@ -209,7 +224,7 @@ def actual_categorical_plot(group, stat, keys, values):
     plt.bar(range(len(keys)), values)
     plt.xticks(range(len(keys)), keys)
     plt.title(name)
-    plt.savefig("plots/" + name+".png")
+    plt.savefig(PLOT_PATH + "/" + name+".png")
     plt.clf()
 
 def categorical_plot(group, stat, keys, values):
@@ -241,7 +256,7 @@ def timeline_plot(group, stat, keys, values, fig=None):
         name = stat + " " + group
         plt.plot(keys, values)
         plt.title(name)
-        plt.savefig("plots/" + name+".png")
+        plt.savefig(PLOT_PATH + "/" + name+".png")
         plt.clf()
     else:
         plt.plot(keys, values, label=group)
@@ -291,7 +306,7 @@ class ComboGroup(Aggregate):
 
         plt.legend()
         plt.title(stat_name + " " + self.name)
-        plt.savefig("plots/" + self.name+" "+stat_name+".png")
+        plt.savefig(PLOT_PATH + "/" + self.name+" "+stat_name+".png")
         plt.close('all')
 
 time_author = ComboGroup(per_day, per_author)

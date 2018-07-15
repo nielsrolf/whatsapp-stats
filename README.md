@@ -3,9 +3,8 @@
 Makes some statistics of a whatsapp conversation
 
 ## Use
-1. Export your whatsapp conversation as .txt and save it in the same dir as `analyze.py`
-2. Set the filename of your .txt at the beginning of `analyze.py`
-3. `python analyze.py`
+1. Export your whatsapp conversation as .txt and save it in `chats`, e.g as `chats/example.txt`
+2. `python analyze.py example [words to analyze]`
 
 ## Example Output
 
