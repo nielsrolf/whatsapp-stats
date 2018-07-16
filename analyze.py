@@ -245,21 +245,39 @@ def smoothed(keys, values):
     svr.fit(np.array(keys)[...,None], np.array(values)[...,None])
     return svr.predict(np.array(keys)[...,None])
 
+def get_str_date(day):
+    first = messages[0].send
+    now = first + dt.timedelta(days=day)
+    return now.strftime("%d.%m.%y")
+
 def timeline_plot(group, stat, keys, values, fig=None):
     """
     If fig is None, plot in a new figure
     If fig is not None, use the group as label and plot in that figure
     """
+    def prepare(int_keys, values):
+        # add 0 where keys are missing
+        values = dict(zip(int_keys, values))
+        keys = list(range(max(int_keys))) # add missing dates
+        values = [values.get(i, 0) for i in keys] # add zero as value for the missing dates
+        # prepare plotting as well
+        locs = keys[::int(len(keys)/6)]
+        dates = [get_str_date(i) for i in locs]
+        return keys, values, locs, dates
     
     if fig is None:
         plt.clf()
         name = stat + " " + group
+        keys, values, locs, dates = prepare(keys, values)
         plt.plot(keys, values)
+        plt.xticks(locs, dates)
         plt.title(name)
         plt.savefig(PLOT_PATH + "/" + name+".png")
         plt.clf()
     else:
+        keys, values, locs, dates = prepare(keys, values)
         plt.plot(keys, values, label=group)
+        plt.xticks(locs, dates)
 
 
 
